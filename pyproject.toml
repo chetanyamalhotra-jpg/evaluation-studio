@@ -1,0 +1,165 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evaluation-studio"
+version = "0.1.0"
+description = "Open-source, local-first evaluation studio built around BYOK, BYOT, BYOP, and Portable Eval Receipts."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Evaluation Studio Contributors" },
+]
+keywords = ["llm", "evaluation", "benchmark", "medical-ai", "reproducibility", "byok", "eval-receipts"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+]
+dependencies = [
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "jinja2>=3.1",
+  "typer>=0.12",
+  "rich>=13.7",
+  "httpx>=0.27",
+  "tenacity>=8.3",
+  "platformdirs>=4.2",
+  "keyring>=25.0",
+  "numpy>=1.26",
+  "scipy>=1.13",
+]
+
+[project.optional-dependencies]
+api = [
+  "litellm>=1.40",
+  "openai>=1.30",
+  "anthropic>=0.28",
+]
+hf = [
+  "torch>=2.3",
+  "transformers>=4.44",
+  "accelerate>=0.33",
+]
+vllm = [
+  "vllm>=0.6",
+]
+pdf = [
+  "pypdf>=4.2",
+]
+sandbox = [
+  "docker>=7.1",
+]
+web = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "python-multipart>=0.0.12",
+]
+dev = [
+  "pytest>=8.2",
+  "pytest-asyncio>=0.23",
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "types-PyYAML>=6.0",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "python-multipart>=0.0.12",
+]
+
+[project.scripts]
+eval-studio = "eval_studio.cli.app:main"
+
+[project.entry-points."eval_studio.models"]
+mock = "eval_studio.gateway.mock:MockGateway"
+http-byok = "eval_studio.gateway.http:HttpBYOKGateway"
+hf = "eval_studio.gateway.adapters.hf:HuggingFaceAdapter"
+vllm = "eval_studio.gateway.adapters.vllm:VLLMAdapter"
+
+[project.entry-points."eval_studio.solvers"]
+
+[project.entry-points."eval_studio.filters"]
+multi_choice_regex = "eval_studio.scoring.filters:MultiChoiceRegexFilter"
+regex = "eval_studio.scoring.filters:RegexFilter"
+take_first = "eval_studio.scoring.filters:TakeFirstFilter"
+take_first_k = "eval_studio.scoring.filters:TakeFirstKFilter"
+majority_vote = "eval_studio.scoring.filters:MajorityVoteFilter"
+think_strip = "eval_studio.scoring.filters:ThinkStripFilter"
+
+[project.entry-points."eval_studio.metrics"]
+acc = "eval_studio.scoring.metrics:acc"
+acc_norm = "eval_studio.scoring.metrics:acc_norm"
+acc_bytes = "eval_studio.scoring.metrics:acc_bytes"
+acc_mutual_info = "eval_studio.scoring.metrics:acc_mutual_info"
+acc_all = "eval_studio.scoring.metrics:acc_all"
+brier_score = "eval_studio.scoring.metrics:brier_score"
+bits_per_byte = "eval_studio.scoring.metrics:bits_per_byte"
+word_perplexity = "eval_studio.scoring.metrics:word_perplexity"
+byte_perplexity = "eval_studio.scoring.metrics:byte_perplexity"
+weighted_perplexity = "eval_studio.scoring.metrics:weighted_perplexity"
+bypass = "eval_studio.scoring.metrics:bypass"
+exact_match = "eval_studio.scoring.metrics:exact_match"
+numeric_exact_match = "eval_studio.scoring.metrics:numeric_exact_match"
+whole_word_match = "eval_studio.scoring.metrics:whole_word_match"
+latex_exact_match = "eval_studio.scoring.metrics:latex_exact_match"
+classification_f1 = "eval_studio.scoring.metrics:classification_f1"
+f1 = "eval_studio.scoring.metrics:classification_f1"
+token_f1 = "eval_studio.scoring.metrics:token_f1"
+squad_f1 = "eval_studio.scoring.metrics:token_f1"
+
+[project.entry-points."eval_studio.aggregations"]
+mean = "eval_studio.stats.aggregation:agg_mean"
+mean_stderr = "eval_studio.stats.bootstrap:mean_stderr"
+bootstrap_stderr = "eval_studio.stats.bootstrap:bootstrap_stderr"
+pooled_sample_stderr = "eval_studio.stats.aggregation:agg_pooled_sample_stderr"
+unweighted_mean_stderr = "eval_studio.stats.aggregation:agg_unweighted_mean_stderr"
+aggregate_group = "eval_studio.stats.aggregation:aggregate_group"
+clustered_stderr = "eval_studio.stats.aggregation:clustered_stderr"
+weighted_perplexity = "eval_studio.stats.aggregation:agg_weighted_perplexity"
+bits_per_byte = "eval_studio.stats.aggregation:agg_bits_per_byte"
+brier_score = "eval_studio.stats.aggregation:agg_brier_score"
+bypass = "eval_studio.stats.aggregation:agg_bypass"
+
+[project.entry-points."eval_studio.sandboxes"]
+docker = "eval_studio.sandbox.docker:DockerSandbox"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+eval_studio = ["py.typed", "web/static/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+  "gpu: requires a CUDA/accelerator GPU and optional [hf]/[vllm] extras",
+  "docker: requires a running Docker daemon and optional [sandbox] extra",
+  "live_api: requires live external API credentials and network access",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unused_configs = true
+mypy_path = "src"
+packages = ["eval_studio"]

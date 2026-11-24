@@ -1,0 +1,21 @@
+﻿name: live_smoke_ds_glm
+version: "0.1.0"
+trust_tier: tier1_zero_code
+output_type: generate_until
+dataset_path: examples/tier1_zero_code/sample.csv
+doc_to_text: "Question: {{ input_text }}\nRespond with only the concise final answer.\nAnswer:"
+doc_to_target: "{{ target }}"
+metrics:
+  - exact_match
+generation_kwargs:
+  max_gen_toks: 1024
+  reasoning_effort: low
+  temperature: 0.0
+metadata:
+  date_stamp: "2026-11-22"
+  judge_enabled: true
+  pricing:
+    input_usd_per_1m: 0.15
+    output_usd_per_1m: 0.60
+    judge_input_usd_per_1m: 0.16
+    judge_output_usd_per_1m: 0.54

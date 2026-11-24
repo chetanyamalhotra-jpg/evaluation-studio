@@ -1,0 +1,95 @@
+/* Precision Telemetry Studio — Design Tokens */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg-canvas: #090D16;
+  --bg-surface: #0F1623;
+  --bg-elevated: #162033;
+  --bg-hover: #1C2940;
+  --bg-code: #070B12;
+  --bg-glass: rgba(15, 22, 35, 0.84);
+  --bg-backdrop: rgba(4, 7, 13, 0.72);
+
+  /* Borders */
+  --border-subtle: #1E293B;
+  --border-strong: #334155;
+  --border-focus: #06B6D4;
+
+  /* Text */
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-inverse: #090D16;
+
+  /* Semantic Accents */
+  --accent-cyan: #06B6D4;
+  --accent-cyan-soft: rgba(6, 182, 212, 0.14);
+  --accent-emerald: #10B981;
+  --accent-emerald-soft: rgba(16, 185, 129, 0.14);
+  --accent-amber: #F59E0B;
+  --accent-amber-soft: rgba(245, 158, 11, 0.14);
+  --accent-rose: #F43F5E;
+  --accent-rose-soft: rgba(244, 63, 94, 0.14);
+  --accent-violet: #8B5CF6;
+  --accent-violet-soft: rgba(139, 92, 246, 0.14);
+
+  /* Elevation & Glow */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border-subtle);
+  --shadow-elevated: 0 10px 28px -8px rgba(0, 0, 0, 0.65), 0 0 0 1px var(--border-subtle);
+  --shadow-drawer: -16px 0 44px rgba(0, 0, 0, 0.65);
+
+  /* Typography */
+  --font-sans: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Motion */
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 240ms;
+  --duration-drawer: 300ms;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg-canvas: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+  --bg-hover: #E2E8F0;
+  --bg-code: #F1F5F9;
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --bg-backdrop: rgba(15, 23, 42, 0.38);
+
+  /* Borders */
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --border-focus: #0891B2;
+
+  /* Text */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-inverse: #FFFFFF;
+
+  /* Semantic Accents */
+  --accent-cyan: #0891B2;
+  --accent-cyan-soft: rgba(8, 145, 178, 0.11);
+  --accent-emerald: #059669;
+  --accent-emerald-soft: rgba(5, 150, 105, 0.11);
+  --accent-amber: #D97706;
+  --accent-amber-soft: rgba(217, 119, 6, 0.11);
+  --accent-rose: #E11D48;
+  --accent-rose-soft: rgba(225, 29, 72, 0.11);
+  --accent-violet: #7C3AED;
+  --accent-violet-soft: rgba(124, 58, 237, 0.11);
+
+  /* Elevation */
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--border-subtle);
+  --shadow-elevated: 0 12px 28px -8px rgba(15, 23, 42, 0.12), 0 0 0 1px var(--border-subtle);
+  --shadow-drawer: -12px 0 36px rgba(15, 23, 42, 0.16);
+}

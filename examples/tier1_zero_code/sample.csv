@@ -1,0 +1,4 @@
+sample_id,input_text,target
+med_001,"Which vitamin deficiency causes scurvy?",Vitamin C
+med_002,"What is the normal resting adult heart rate range in bpm?",60-100
+med_003,"Which organ produces insulin?",Pancreas

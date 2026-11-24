@@ -1,0 +1,53 @@
+# Secrets & local environment files
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.secret
+*.secrets
+secrets.json
+secrets.yaml
+secrets.yml
+secrets.toml
+*api_key*.txt
+*api_key*.json
+*api_key*.yaml
+
+# Local caches, SQLite DBs, WALs, uploads, and Eval Receipts
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.wal
+*.sqlite
+*.sqlite3
+.eval_cache/
+receipts/
+uploads/
+*.zip
+
+# Python artifacts & virtualenvs
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Web Studio frontend dependencies & Vite build artifacts (src/eval_studio/web/static/ IS tracked)
+web/node_modules/
+web/dist/

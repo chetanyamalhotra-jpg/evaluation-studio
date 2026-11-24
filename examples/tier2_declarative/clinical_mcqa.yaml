@@ -1,0 +1,31 @@
+name: tier2_clinical_mcqa
+version: "0.1.0"
+trust_tier: tier2_declarative
+output_type: multiple_choice
+description: "Select the single best clinical answer."
+doc_to_text: |-
+  Clinical Vignette: {{ input_text }}
+  Choices:
+  {% for c in choices %}
+   {{ loop.index0 }}: {{ c }}
+  {% endfor %}
+  Answer:
+doc_to_target: "{{ target }}"
+num_fewshot: 5
+fewshot_rotation_sets: 4
+metrics:
+  - acc_bytes
+  - acc_norm
+filter_ensembles:
+  - name: strict_choice
+    steps:
+      - name: multi_choice_regex
+        params:
+          fallback: "[invalid]"
+  - name: flexible_choice
+    steps:
+      - name: multi_choice_regex
+        params:
+          fallback: "[invalid]"
+generation_kwargs:
+  temperature: 0.0
