@@ -7,6 +7,7 @@ export interface CodeBlockProps {
   maxHeight?: string;
   wrap?: boolean;
   copyable?: boolean;
+  flush?: boolean;
   className?: string;
 }
 
@@ -14,16 +15,17 @@ export function CodeBlock({
   code,
   language,
   title,
-  maxHeight = "320px",
+  maxHeight = "340px",
   wrap = false,
   copyable = true,
+  flush = false,
   className = "",
 }: CodeBlockProps) {
   const showHeader = Boolean(title || language || copyable);
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border ${className}`}
+      className={`overflow-hidden ${flush ? "" : "rounded-md border"} ${className}`}
       style={{
         backgroundColor: "var(--bg-code)",
         borderColor: "var(--border-subtle)",
@@ -31,16 +33,16 @@ export function CodeBlock({
     >
       {showHeader && (
         <div
-          className="flex items-center justify-between gap-2 border-b px-3.5 py-2"
+          className="flex items-center justify-between gap-2 border-b px-4 py-2"
           style={{
             backgroundColor: "var(--bg-surface)",
             borderColor: "var(--border-subtle)",
           }}
         >
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2.5">
             {title && (
               <span
-                className="truncate text-xs font-medium"
+                className="text-ui-sm truncate font-medium"
                 style={{ color: "var(--text-primary)" }}
               >
                 {title}
@@ -48,21 +50,18 @@ export function CodeBlock({
             )}
             {language && (
               <span
-                className="font-mono-num rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wider"
-                style={{
-                  backgroundColor: "var(--bg-elevated)",
-                  color: "var(--text-muted)",
-                }}
+                className="font-mono-num text-ui-sm"
+                style={{ color: "var(--text-muted)" }}
               >
                 {language}
               </span>
             )}
           </div>
-          {copyable && <CopyButton value={code} size="sm" />}
+          {copyable && <CopyButton value={code} size="sm" variant="ghost" />}
         </div>
       )}
       <pre
-        className={`font-mono-num m-0 overflow-auto p-3.5 text-xs leading-relaxed ${
+        className={`font-mono-num text-ui-sm m-0 overflow-auto p-4 leading-relaxed ${
           wrap ? "whitespace-pre-wrap break-words" : "whitespace-pre"
         }`}
         style={{

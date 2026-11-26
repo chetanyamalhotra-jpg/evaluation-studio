@@ -1,7 +1,7 @@
 import { Calculator, Play, ShieldAlert, Terminal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
-import { Badge, Card, ErrorBanner } from "../components/common";
+import { Card, ErrorBanner, StatusBadge } from "../components/common";
 import type {
   CostEstimateResponse,
   ProviderPreset,
@@ -136,30 +136,70 @@ export function RunLauncherPage() {
     }
   };
 
-  const pct = totalSamples > 0 ? Math.min(100, Math.round((completedSamples / totalSamples) * 100)) : 0;
+  const pct =
+    totalSamples > 0 ? Math.min(100, Math.round((completedSamples / totalSamples) * 100)) : 0;
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1
+          className="text-[26px] font-semibold tracking-[-0.03em]"
+          style={{ color: "var(--text-primary)" }}
+        >
+          Launch evaluation and live telemetry
+        </h1>
+        <p className="text-ui-base mt-1 max-w-[64ch]" style={{ color: "var(--text-secondary)" }}>
+          Configure target and judge endpoints, inspect pre-flight cost projections, and stream sample execution over SSE.
+        </p>
+      </div>
+
       {error && <ErrorBanner error={error} />}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Run Configuration Builder */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <Card
-          title="Evaluation Run Configuration"
-          subtitle="Select benchmark, model preset, judge, and safety caps"
-          className="lg:col-span-2"
+          title="Run parameters"
+          subtitle="Select benchmark specification, inference gateway, and safety limits"
+          className="lg:col-span-8"
         >
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-ui-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+              Execution backend
+            </span>
+            <div
+              role="radiogroup"
+              aria-label="Execution backend"
+              className="inline-flex divide-x overflow-hidden rounded-md border"
+              style={{ borderColor: "var(--border-subtle)" }}
+            >
+              {(["mock", "http-byok"] as const).map((opt) => {
+                const active = backend === opt;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setBackend(opt)}
+                    className="telemetry-transition text-ui-sm cursor-pointer px-3.5 py-1.5 font-medium"
+                    style={{
+                      backgroundColor: active ? "var(--accent-cyan-soft)" : "var(--bg-elevated)",
+                      color: active ? "var(--accent-cyan)" : "var(--text-secondary)",
+                    }}
+                  >
+                    {opt === "mock" ? "Mock offline" : "Live HTTP BYOK"}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Benchmark Task YAML</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Benchmark task YAML</span>
               <select
                 value={taskPath}
                 onChange={(e) => setTaskPath(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
+                className="input-control w-full px-3 py-2"
               >
                 {tasks.map((t) => (
                   <option key={t.path} value={t.path}>
@@ -169,116 +209,76 @@ export function RunLauncherPage() {
               </select>
             </label>
 
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Quick Provider Preset</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Provider preset</span>
               <select
                 defaultValue=""
                 onChange={(e) => applyPreset(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
+                className="input-control w-full px-3 py-2"
               >
                 <option value="">Choose preset (DeepSeek, Sarvam, OpenAI...)</option>
                 {presets.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — {p.models[0]?.id ?? ""}
+                    {p.name} ({p.models[0]?.id ?? "custom"})
                   </option>
                 ))}
               </select>
             </label>
 
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Backend</span>
-              <select
-                value={backend}
-                onChange={(e) => setBackend(e.target.value as "mock" | "http-byok")}
-                className="w-full rounded-lg border px-3 py-2 text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
-              >
-                <option value="mock">mock (offline deterministic)</option>
-                <option value="http-byok">http-byok (DeepSeek / Sarvam / OpenAI / Ollama)</option>
-              </select>
-            </label>
-
-            <label className="block space-y-1 text-xs">
+            <label className="text-ui-sm block space-y-1.5">
               <span style={{ color: "var(--text-secondary)" }}>Model ID</span>
               <input
                 value={modelId}
                 onChange={(e) => setModelId(e.target.value)}
                 placeholder="deepseek-flash or glm5.3-flash"
-                className="w-full rounded-lg border px-3 py-2 font-mono text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
+                className="input-control font-mono-num w-full px-3 py-2"
               />
             </label>
 
-            <label className="block space-y-1 text-xs sm:col-span-2">
-              <span style={{ color: "var(--text-secondary)" }}>Custom Base URL (optional)</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Base URL override (optional)</span>
               <input
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder="https://api.deepseek.com or https://api.sarvam.ai/v2"
-                className="w-full rounded-lg border px-3 py-2 font-mono text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
+                placeholder="https://api.deepseek.com"
+                className="input-control font-mono-num w-full px-3 py-2"
               />
             </label>
 
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Judge Model (optional)</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Judge model (optional)</span>
               <input
                 value={judgeModel}
                 onChange={(e) => setJudgeModel(e.target.value)}
                 placeholder="mock or gpt-4o-mini"
-                className="w-full rounded-lg border px-3 py-2 font-mono text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
+                className="input-control font-mono-num w-full px-3 py-2"
               />
             </label>
 
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Fallback Judge (optional)</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Fallback judge (optional)</span>
               <input
                 value={fallbackJudgeModel}
                 onChange={(e) => setFallbackJudgeModel(e.target.value)}
                 placeholder="mock"
-                className="w-full rounded-lg border px-3 py-2 font-mono text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
+                className="input-control font-mono-num w-full px-3 py-2"
               />
             </label>
 
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Hard Budget Cap (--max-cost-usd)</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Hard USD cap (--max-cost-usd)</span>
               <input
                 type="number"
                 step="0.05"
                 min="0"
                 value={maxCostUsd}
                 onChange={(e) => setMaxCostUsd(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 font-mono text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
+                className="input-control font-mono-num w-full px-3 py-2"
               />
             </label>
 
-            <div className="grid grid-cols-3 gap-2">
-              <label className="block space-y-1 text-xs">
+            <div className="grid grid-cols-3 gap-2.5">
+              <label className="text-ui-sm block space-y-1.5">
                 <span style={{ color: "var(--text-secondary)" }}>Limit</span>
                 <input
                   type="number"
@@ -286,14 +286,10 @@ export function RunLauncherPage() {
                   value={limit}
                   onChange={(e) => setLimit(e.target.value)}
                   placeholder="All"
-                  className="w-full rounded-lg border px-2 py-2 font-mono text-xs"
-                  style={{
-                    borderColor: "var(--border-subtle)",
-                    backgroundColor: "var(--bg-elevated)",
-                  }}
+                  className="input-control font-mono-num w-full px-2.5 py-2"
                 />
               </label>
-              <label className="block space-y-1 text-xs">
+              <label className="text-ui-sm block space-y-1.5">
                 <span style={{ color: "var(--text-secondary)" }}>Repeats</span>
                 <input
                   type="number"
@@ -301,14 +297,10 @@ export function RunLauncherPage() {
                   max="16"
                   value={repeats}
                   onChange={(e) => setRepeats(Number(e.target.value) || 1)}
-                  className="w-full rounded-lg border px-2 py-2 font-mono text-xs"
-                  style={{
-                    borderColor: "var(--border-subtle)",
-                    backgroundColor: "var(--bg-elevated)",
-                  }}
+                  className="input-control font-mono-num w-full px-2.5 py-2"
                 />
               </label>
-              <label className="block space-y-1 text-xs">
+              <label className="text-ui-sm block space-y-1.5">
                 <span style={{ color: "var(--text-secondary)" }}>Bootstrap</span>
                 <input
                   type="number"
@@ -316,165 +308,164 @@ export function RunLauncherPage() {
                   step="100"
                   value={bootstrapIters}
                   onChange={(e) => setBootstrapIters(Number(e.target.value) || 0)}
-                  className="w-full rounded-lg border px-2 py-2 font-mono text-xs"
-                  style={{
-                    borderColor: "var(--border-subtle)",
-                    backgroundColor: "var(--bg-elevated)",
-                  }}
+                  className="input-control font-mono-num w-full px-2.5 py-2"
                 />
               </label>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-5 text-xs">
-            <label className="inline-flex items-center gap-2">
+          <div
+            className="text-ui-sm mt-5 flex flex-wrap items-center gap-6 border-t pt-4"
+            style={{ borderColor: "var(--border-subtle)" }}
+          >
+            <label className="inline-flex cursor-pointer items-center gap-2">
               <input
                 type="checkbox"
                 checked={olmesEnabled}
                 onChange={(e) => setOlmesEnabled(e.target.checked)}
+                className="h-4 w-4 accent-[var(--accent-cyan)]"
               />
-              <span>OLMES Dual Cloze + MCF</span>
+              <span>OLMES dual Cloze + MCF</span>
             </label>
-            <label className="inline-flex items-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2">
               <input
                 type="checkbox"
                 checked={enableThinking}
                 onChange={(e) => setEnableThinking(e.target.checked)}
+                className="h-4 w-4 accent-[var(--accent-cyan)]"
               />
-              <span>Enable Thinking Trace Extraction</span>
+              <span>Thinking trace extraction</span>
             </label>
             {enableThinking && (
               <input
                 value={thinkEndToken}
                 onChange={(e) => setThinkEndToken(e.target.value)}
-                className="w-32 rounded-md border px-2 py-1 font-mono text-xs"
-                style={{
-                  borderColor: "var(--border-subtle)",
-                  backgroundColor: "var(--bg-elevated)",
-                }}
+                aria-label="Think end delimiter"
+                className="input-control font-mono-num w-32 px-2.5 py-1"
               />
             )}
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => void handleEstimate()}
-              className="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-xs font-semibold"
-              style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-elevated)" }}
+              className="telemetry-transition text-ui-base inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 font-medium hover:bg-[var(--bg-elevated)]"
+              style={{ borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}
             >
-              <Calculator className="h-3.5 w-3.5" /> Estimate Cost
+              <Calculator className="h-4 w-4" /> Estimate cost
             </button>
             <button
               type="button"
               onClick={() => void handleLaunch()}
               disabled={runStatus === "running"}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold disabled:opacity-50"
-              style={{ backgroundColor: "var(--accent-cyan)", color: "#090D16" }}
+              className="telemetry-transition text-ui-base inline-flex cursor-pointer items-center gap-2 rounded-md px-5 py-2 font-semibold hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: "var(--accent-cyan)", color: "var(--text-inverse)" }}
             >
-              <Play className="h-3.5 w-3.5" /> Launch Run
+              <Play className="h-4 w-4" /> Launch evaluation
             </button>
           </div>
         </Card>
 
-        {/* Pre-Flight Cost Breakdown */}
-        <Card title="Pre-Flight Cost Breakdown" subtitle="Target + Judge token estimate" elevated>
+        <Card
+          title="Pre-flight cost ledger"
+          subtitle="Target and judge token projection"
+          padding="none"
+          className="lg:col-span-4"
+        >
           {estimate ? (
-            <div className="space-y-3 text-xs">
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-secondary)" }}>Samples × Repeats</span>
-                <span className="font-mono font-semibold">
+            <div className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+              <div className="text-ui-sm flex justify-between px-5 py-3">
+                <span style={{ color: "var(--text-secondary)" }}>Samples and repeats</span>
+                <span className="font-mono-num font-semibold">
                   {estimate.n_samples} × {estimate.repeats}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-secondary)" }}>Target Tokens (in / out)</span>
-                <span className="font-mono">
+              <div className="text-ui-sm flex justify-between px-5 py-3">
+                <span style={{ color: "var(--text-secondary)" }}>Target tokens (in / out)</span>
+                <span className="font-mono-num">
                   {formatTokens(estimate.target_prompt_tokens)} /{" "}
                   {formatTokens(estimate.target_completion_tokens)}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-secondary)" }}>Target Est. USD</span>
-                <span className="font-mono">{formatUsd(estimate.target_usd)}</span>
+              <div className="text-ui-sm flex justify-between px-5 py-3">
+                <span style={{ color: "var(--text-secondary)" }}>Target estimated USD</span>
+                <span className="font-mono-num">{formatUsd(estimate.target_usd)}</span>
               </div>
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-secondary)" }}>Judge Est. USD</span>
-                <span className="font-mono">{formatUsd(estimate.judge_usd)}</span>
+              <div className="text-ui-sm flex justify-between px-5 py-3">
+                <span style={{ color: "var(--text-secondary)" }}>Judge estimated USD</span>
+                <span className="font-mono-num">{formatUsd(estimate.judge_usd)}</span>
               </div>
-              <div
-                className="flex items-center justify-between border-t pt-3 text-sm font-semibold"
-                style={{ borderColor: "var(--border-subtle)" }}
-              >
-                <span>Total Estimate</span>
-                <span className="font-mono" style={{ color: "var(--accent-cyan)" }}>
+              <div className="text-ui-base flex items-center justify-between px-5 py-3.5 font-semibold">
+                <span>Projected total</span>
+                <span className="font-mono-num" style={{ color: "var(--accent-cyan)" }}>
                   {formatUsd(estimate.total_usd)}
                 </span>
               </div>
               {estimate.exceeds_max_cost && (
                 <div
-                  className="flex items-center gap-2 rounded-lg p-2.5 text-[11px]"
-                  style={{ backgroundColor: "var(--accent-rose-soft)", color: "var(--accent-rose)" }}
+                  className="text-ui-sm flex items-center gap-2.5 px-5 py-3"
+                  style={{
+                    backgroundColor: "var(--accent-rose-soft)",
+                    color: "var(--accent-rose)",
+                  }}
                 >
                   <ShieldAlert className="h-4 w-4 shrink-0" />
-                  Exceeds --max-cost-usd cap ({formatUsd(Number(maxCostUsd))})!
+                  <span>Exceeds --max-cost-usd cap ({formatUsd(Number(maxCostUsd))}).</span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-              Click <strong>Estimate Cost</strong> to compute exact token & USD projections before
-              dispatching requests.
+            <div className="text-ui-sm p-5" style={{ color: "var(--text-secondary)" }}>
+              Select Estimate cost to compute exact token and USD projections before dispatching inference requests.
             </div>
           )}
         </Card>
       </div>
 
-      {/* Live SSE Streaming Telemetry Console */}
       <Card
-        title="Live SSE Telemetry Console"
-        subtitle="Real-time sample scoring, reasoning trace snippets, and spend meter"
+        title="SSE telemetry stream"
+        subtitle="Real-time sample progress, reasoning snippets, and cumulative USD meter"
+        padding="none"
         actions={
-          <div className="flex items-center gap-2">
-            <Badge
-              variant={
-                runStatus === "completed"
-                  ? "emerald"
-                  : runStatus === "running"
-                    ? "cyan"
-                    : runStatus === "failed" || runStatus === "budget_exceeded"
-                      ? "rose"
-                      : "neutral"
-              }
-              dot
-            >
-              {runStatus.toUpperCase()}
-            </Badge>
-            <span className="font-mono text-xs tabular-nums">
+          <div className="flex items-center gap-4">
+            <StatusBadge status={runStatus} />
+            <span className="font-mono-num text-ui-sm">
               {completedSamples}/{totalSamples} ({pct}%) · {formatUsd(spentUsd)}
             </span>
           </div>
         }
       >
-        <div className="mb-3 h-2 w-full overflow-hidden rounded-full" style={{ backgroundColor: "var(--bg-elevated)" }}>
+        <div
+          className="h-[2px] w-full"
+          style={{ backgroundColor: "var(--bg-elevated)" }}
+        >
           <div
-            className="h-full transition-all duration-300"
+            className="h-full transition-[width] duration-200"
             style={{ width: `${pct}%`, backgroundColor: "var(--accent-cyan)" }}
           />
         </div>
         <div
-          className="max-h-72 overflow-y-auto rounded-lg border p-3 font-mono text-[11px]"
-          style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-canvas)" }}
+          className="font-mono-num text-ui-sm max-h-72 overflow-y-auto divide-y"
+          style={{
+            backgroundColor: "var(--bg-code)",
+            borderColor: "var(--border-subtle)",
+          }}
         >
           {events.length === 0 ? (
-            <div className="flex items-center gap-2" style={{ color: "var(--text-muted)" }}>
-              <Terminal className="h-3.5 w-3.5" /> Waiting for SSE stream events...
+            <div
+              className="flex items-center gap-2 px-5 py-4"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <Terminal className="h-4 w-4" /> Waiting for SSE stream events...
             </div>
           ) : (
             events.map((ev, i) => (
-              <div key={i} className="border-b py-1 last:border-b-0" style={{ borderColor: "var(--border-subtle)" }}>
+              <div key={i} className="px-5 py-2">
                 <span style={{ color: "var(--accent-cyan)" }}>[{ev.event}]</span>{" "}
-                <span style={{ color: "var(--text-secondary)" }}>{JSON.stringify(ev).slice(0, 220)}</span>
+                <span style={{ color: "var(--text-secondary)" }}>
+                  {JSON.stringify(ev).slice(0, 220)}
+                </span>
               </div>
             ))
           )}

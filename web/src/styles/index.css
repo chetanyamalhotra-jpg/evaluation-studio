@@ -7,6 +7,8 @@
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -19,7 +21,7 @@
   h2,
   h3,
   .font-display {
-    font-family: var(--font-display);
+    font-family: var(--font-sans);
   }
 
   code,
@@ -33,7 +35,6 @@
     border-color: var(--border-subtle);
   }
 
-  /* Subtle Precision Telemetry scrollbars */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -45,7 +46,7 @@
 
   ::-webkit-scrollbar-thumb {
     background: var(--border-strong);
-    border-radius: 9999px;
+    border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -58,23 +59,64 @@
   font-variant-numeric: tabular-nums;
 }
 
+.text-ui-lg {
+  font-size: var(--text-h2);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.text-ui-base {
+  font-size: var(--text-body);
+  line-height: 1.55;
+}
+
+.text-ui-sm {
+  font-size: var(--text-compact);
+  line-height: 1.45;
+}
+
 .telemetry-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  box-shadow: var(--shadow-card);
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.structural-grid {
+  display: grid;
+  gap: 1px;
+  background-color: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.input-control {
+  font-size: var(--text-body);
+  line-height: 1.45;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border-radius: 6px;
+  transition:
+    border-color var(--duration-fast) var(--ease-spring),
+    background-color var(--duration-fast) var(--ease-spring);
+}
+
+.input-control:focus {
+  outline: none;
+  border-color: var(--border-focus);
 }
 
 .telemetry-panel {
   background-color: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .telemetry-glass {
   background-color: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .telemetry-transition {
@@ -82,7 +124,6 @@
     background-color var(--duration-fast) var(--ease-spring),
     border-color var(--duration-fast) var(--ease-spring),
     color var(--duration-fast) var(--ease-spring),
-    box-shadow var(--duration-fast) var(--ease-spring),
     transform var(--duration-fast) var(--ease-spring),
     opacity var(--duration-normal) var(--ease-spring);
 }
@@ -90,7 +131,7 @@
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -109,43 +150,12 @@
   }
 }
 
-@keyframes toastSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes telemetryPulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.55;
-    transform: scale(0.88);
-  }
-}
-
 .animate-fade-slide-up {
   animation: fadeSlideUp var(--duration-normal) var(--ease-spring) both;
 }
 
 .animate-drawer-in {
   animation: drawerSlideIn var(--duration-drawer) var(--ease-spring) both;
-}
-
-.animate-toast-in {
-  animation: toastSlideIn var(--duration-normal) var(--ease-spring) both;
-}
-
-.animate-telemetry-pulse {
-  animation: telemetryPulse 2.2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

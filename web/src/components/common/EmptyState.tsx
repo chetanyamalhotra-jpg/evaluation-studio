@@ -17,32 +17,25 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-10 text-center ${className}`}
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        borderColor: "var(--border-strong)",
-      }}
+      className={`flex flex-col items-center justify-center px-6 py-10 text-center ${className}`}
     >
       {icon && (
         <div
-          className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl"
-          style={{
-            backgroundColor: "var(--bg-elevated)",
-            color: "var(--accent-cyan)",
-          }}
+          className="mb-3 flex h-10 w-10 items-center justify-center"
+          style={{ color: "var(--accent-cyan)" }}
         >
           {icon}
         </div>
       )}
       <h3
-        className="text-sm font-semibold tracking-tight"
+        className="text-ui-base font-semibold tracking-tight"
         style={{ color: "var(--text-primary)" }}
       >
         {title}
       </h3>
       {description && (
         <p
-          className="mt-1 max-w-md text-xs leading-relaxed"
+          className="text-ui-sm mt-1.5 max-w-[54ch]"
           style={{ color: "var(--text-secondary)" }}
         >
           {description}

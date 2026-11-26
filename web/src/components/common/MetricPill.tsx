@@ -26,37 +26,25 @@ export function MetricPill({
   const formattedErr = formatStderr(stderr, mode, decimals);
 
   return (
-    <div
-      className={`inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs ${className}`}
-      style={{
-        backgroundColor: "var(--bg-elevated)",
-        borderColor: unresolved
-          ? "rgba(245, 158, 11, 0.45)"
-          : "var(--border-subtle)",
-      }}
-    >
-      <span
-        className="font-medium"
-        style={{ color: "var(--text-secondary)" }}
-      >
+    <span className={`text-ui-sm inline-flex items-baseline gap-2 ${className}`}>
+      <span className="font-medium" style={{ color: "var(--text-secondary)" }}>
         {label}
       </span>
       <span
         className="font-mono-num font-semibold"
         style={{
           color:
-            accent === "neutral"
-              ? "var(--text-primary)"
-              : `var(--accent-${accent})`,
+            unresolved
+              ? "var(--accent-amber)"
+              : accent === "neutral"
+                ? "var(--text-primary)"
+                : `var(--accent-${accent})`,
         }}
       >
         {formattedVal}
       </span>
       {formattedErr && (
-        <span
-          className="font-mono-num text-[11px]"
-          style={{ color: "var(--text-muted)" }}
-        >
+        <span className="font-mono-num" style={{ color: "var(--text-muted)" }}>
           {formattedErr}
         </span>
       )}
@@ -65,6 +53,6 @@ export function MetricPill({
           UNRESOLVED
         </Badge>
       )}
-    </div>
+    </span>
   );
 }

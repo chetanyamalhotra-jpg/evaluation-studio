@@ -1,4 +1,4 @@
-import { BarChart3, CheckSquare, Square } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import {
@@ -7,7 +7,13 @@ import {
   ParetoScatterChart,
   RadarProfileChart,
 } from "../components/charts/AnalyticsCharts";
-import { Badge, Card, EmptyState, ErrorBanner, LoadingSkeleton } from "../components/common";
+import {
+  Card,
+  EmptyState,
+  ErrorBanner,
+  LoadingSkeleton,
+  StatusBadge,
+} from "../components/common";
 import type { CompareResponse, ReceiptListItem } from "../types/evalStudio";
 import { formatMetric, formatUsd } from "../utils/format";
 
@@ -76,78 +82,118 @@ export function CompareLabPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1
+            className="text-[26px] font-semibold tracking-[-0.03em]"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Statistical model comparison
+          </h1>
+          <p className="text-ui-base mt-1 max-w-[64ch]" style={{ color: "var(--text-secondary)" }}>
+            Compare receipts with 95% confidence intervals, paired bootstrap deltas, McNemar tests, and item-level diffs.
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={selectedIds.length === 0 || comparing}
+          onClick={() => void runComparison()}
+          className="telemetry-transition text-ui-base cursor-pointer rounded-md px-4 py-2 font-semibold hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          style={{ backgroundColor: "var(--accent-cyan)", color: "var(--text-inverse)" }}
+        >
+          {comparing ? "Computing statistics..." : `Compare selected (${selectedIds.length})`}
+        </button>
+      </div>
+
       {error && <ErrorBanner error={error} />}
 
       <Card
-        title="Select Receipts to Compare"
-        subtitle="Pick 2+ receipts to compute 95% CIs, paired bootstrap deltas, McNemar's test, and item-level diffs"
-        actions={
-          <button
-            type="button"
-            disabled={selectedIds.length === 0 || comparing}
-            onClick={() => void runComparison()}
-            className="rounded-lg px-4 py-1.5 text-xs font-semibold transition-opacity disabled:opacity-40"
-            style={{ backgroundColor: "var(--accent-cyan)", color: "#090D16" }}
-          >
-            {comparing ? "Computing Stats..." : `Compare (${selectedIds.length})`}
-          </button>
-        }
+        title="Select receipts and baseline"
+        subtitle="Check two or more runs to compare and designate one baseline reference"
+        padding="none"
       >
         {loadingList ? (
-          <LoadingSkeleton lines={3} />
+          <LoadingSkeleton variant="row" lines={4} />
         ) : receipts.length === 0 ? (
           <EmptyState
-            icon={<BarChart3 className="h-8 w-8" />}
+            icon={<BarChart3 className="h-7 w-7" />}
             title="No receipts available to compare"
-            description="Run at least two evaluations first so you can compare models statistically."
+            description="Run at least two evaluations first so statistical comparisons can be computed."
           />
         ) : (
-          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3">
-            {receipts.map((r) => {
-              const checked = selectedIds.includes(r.dir_name);
-              const isBase = baselineId === r.dir_name;
-              return (
-                <div
-                  key={r.dir_name}
-                  className="flex items-start justify-between gap-2 rounded-xl border p-3 transition-colors"
-                  style={{
-                    borderColor: checked ? "var(--accent-cyan)" : "var(--border-subtle)",
-                    backgroundColor: checked ? "var(--accent-cyan-soft)" : "var(--bg-elevated)",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleReceipt(r.dir_name)}
-                    className="flex min-w-0 flex-1 items-start gap-2.5 text-left"
+          <div className="overflow-x-auto">
+            <table className="text-ui-sm w-full text-left">
+              <thead>
+                <tr className="border-b" style={{ borderColor: "var(--border-subtle)" }}>
+                  <th className="w-12 px-5 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
+                    Include
+                  </th>
+                  <th className="px-4 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
+                    Model ID
+                  </th>
+                  <th className="px-4 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
+                    Task
+                  </th>
+                  <th className="px-4 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
+                    Cost
+                  </th>
+                  <th
+                    className="px-5 py-3 text-right font-medium"
+                    style={{ color: "var(--text-secondary)" }}
                   >
-                    {checked ? (
-                      <CheckSquare className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "var(--accent-cyan)" }} />
-                    ) : (
-                      <Square className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "var(--text-muted)" }} />
-                    )}
-                    <div className="min-w-0">
-                      <div className="truncate text-xs font-semibold">{r.model_id}</div>
-                      <div className="truncate text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                        {r.task_name} · {formatUsd(r.total_cost_usd)}
-                      </div>
-                    </div>
-                  </button>
-                  {checked && (
-                    <button
-                      type="button"
-                      onClick={() => setBaselineId(r.dir_name)}
-                      className="shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold"
+                    Baseline
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+                {receipts.map((r) => {
+                  const checked = selectedIds.includes(r.dir_name);
+                  const isBase = baselineId === r.dir_name;
+                  return (
+                    <tr
+                      key={r.dir_name}
                       style={{
-                        backgroundColor: isBase ? "var(--accent-emerald)" : "var(--bg-surface)",
-                        color: isBase ? "#090D16" : "var(--text-secondary)",
+                        backgroundColor: checked ? "var(--bg-elevated)" : "transparent",
                       }}
                     >
-                      {isBase ? "Baseline" : "Set Base"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                      <td className="px-5 py-3">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleReceipt(r.dir_name)}
+                          aria-label={`Include ${r.dir_name}`}
+                          className="h-4 w-4 cursor-pointer accent-[var(--accent-cyan)]"
+                        />
+                      </td>
+                      <td className="font-mono-num px-4 py-3 font-medium">{r.model_id}</td>
+                      <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>
+                        {r.task_name}
+                      </td>
+                      <td className="font-mono-num px-4 py-3">{formatUsd(r.total_cost_usd)}</td>
+                      <td className="px-5 py-3 text-right">
+                        <label className="text-ui-sm inline-flex cursor-pointer items-center gap-2">
+                          <input
+                            type="radio"
+                            name="baseline-receipt"
+                            disabled={!checked}
+                            checked={isBase}
+                            onChange={() => setBaselineId(r.dir_name)}
+                            className="h-4 w-4 accent-[var(--accent-cyan)]"
+                          />
+                          <span
+                            style={{
+                              color: isBase ? "var(--accent-cyan)" : "var(--text-secondary)",
+                            }}
+                          >
+                            {isBase ? "Baseline" : "Select"}
+                          </span>
+                        </label>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </Card>
@@ -166,61 +212,62 @@ export function CompareLabPage() {
             entries={comparison.category_breakdown}
           />
 
-          {/* Pairwise Statistical Matrix & Item Diffs */}
           {comparison.pairwise.map((pair) => (
             <Card
               key={`${pair.baseline_id}-${pair.challenger_id}`}
-              title={`Head-to-Head: ${pair.challenger_id} vs. ${pair.baseline_id}`}
+              title={`Head-to-head: ${pair.challenger_id} vs ${pair.baseline_id}`}
               subtitle={`Metric: ${pair.metric}`}
+              padding="none"
               actions={
-                <Badge variant={pair.unresolved ? "amber" : "emerald"}>
-                  {pair.unresolved ? "UNRESOLVED (CI spans 0)" : "SIGNIFICANT"}
-                </Badge>
+                <StatusBadge status={pair.unresolved ? "UNRESOLVED" : "VERIFIED"} />
               }
             >
-              <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-lg border p-3" style={{ borderColor: "var(--border-subtle)" }}>
-                  <div className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                    Paired Bootstrap Δ
+              <div
+                className="grid grid-cols-1 divide-y border-b sm:grid-cols-4 sm:divide-x sm:divide-y-0"
+                style={{ borderColor: "var(--border-subtle)" }}
+              >
+                <div className="p-4">
+                  <div className="text-ui-sm" style={{ color: "var(--text-secondary)" }}>
+                    Paired bootstrap delta
                   </div>
-                  <div className="mt-1 font-mono text-sm font-semibold tabular-nums">
+                  <div className="font-mono-num text-ui-lg mt-1 font-semibold">
                     {(pair.paired_bootstrap.mean_delta * 100).toFixed(2)}%
                   </div>
-                  <div className="font-mono text-[10px]" style={{ color: "var(--text-muted)" }}>
+                  <div className="font-mono-num text-ui-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
                     p = {pair.paired_bootstrap.p_value.toFixed(4)}
                   </div>
                 </div>
-                <div className="rounded-lg border p-3" style={{ borderColor: "var(--border-subtle)" }}>
-                  <div className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                    95% Bootstrap CI
+                <div className="p-4">
+                  <div className="text-ui-sm" style={{ color: "var(--text-secondary)" }}>
+                    95% bootstrap CI
                   </div>
-                  <div className="mt-1 font-mono text-sm font-semibold tabular-nums">
+                  <div className="font-mono-num text-ui-lg mt-1 font-semibold">
                     [{(pair.paired_bootstrap.ci_low * 100).toFixed(1)}%,{" "}
                     {(pair.paired_bootstrap.ci_high * 100).toFixed(1)}%]
                   </div>
                 </div>
-                <div className="rounded-lg border p-3" style={{ borderColor: "var(--border-subtle)" }}>
-                  <div className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                    McNemar Test
+                <div className="p-4">
+                  <div className="text-ui-sm" style={{ color: "var(--text-secondary)" }}>
+                    McNemar significance
                   </div>
-                  <div className="mt-1 font-mono text-sm font-semibold tabular-nums">
-                    {pair.mcnemar ? `p = ${pair.mcnemar.p_value.toFixed(4)}` : "N/A (non-binary)"}
+                  <div className="font-mono-num text-ui-lg mt-1 font-semibold">
+                    {pair.mcnemar ? `p = ${pair.mcnemar.p_value.toFixed(4)}` : "N/A"}
                   </div>
                   {pair.mcnemar && (
-                    <div className="font-mono text-[10px]" style={{ color: "var(--text-muted)" }}>
-                      n01={pair.mcnemar.n_01} · n10={pair.mcnemar.n_10}
+                    <div className="font-mono-num text-ui-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      n01={pair.mcnemar.n_01}, n10={pair.mcnemar.n_10}
                     </div>
                   )}
                 </div>
-                <div className="rounded-lg border p-3" style={{ borderColor: "var(--border-subtle)" }}>
-                  <div className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                    Decision Flip Rate
+                <div className="p-4">
+                  <div className="text-ui-sm" style={{ color: "var(--text-secondary)" }}>
+                    Decision flip rate
                   </div>
-                  <div className="mt-1 font-mono text-sm font-semibold tabular-nums">
-                    {pair.noise_floor ? formatMetric(pair.noise_floor.flip_rate) : "—"}
+                  <div className="font-mono-num text-ui-lg mt-1 font-semibold">
+                    {pair.noise_floor ? formatMetric(pair.noise_floor.flip_rate) : "--"}
                   </div>
                   {pair.noise_floor && (
-                    <div className="font-mono text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    <div className="font-mono-num text-ui-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
                       {pair.noise_floor.n_flips} / {pair.noise_floor.n_decisions} flips
                     </div>
                   )}
@@ -229,30 +276,37 @@ export function CompareLabPage() {
 
               {pair.item_diffs.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="text-ui-sm w-full text-left">
                     <thead>
                       <tr className="border-b" style={{ borderColor: "var(--border-subtle)" }}>
-                        <th className="py-2 pr-3">Sample ID</th>
-                        <th className="py-2 pr-3">Baseline</th>
-                        <th className="py-2 pr-3">Challenger</th>
-                        <th className="py-2">Target</th>
+                        <th className="px-5 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
+                          Sample ID
+                        </th>
+                        <th className="px-4 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
+                          Baseline
+                        </th>
+                        <th className="px-4 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
+                          Challenger
+                        </th>
+                        <th className="px-5 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
+                          Target
+                        </th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
                       {pair.item_diffs.slice(0, 20).map((diff) => (
-                        <tr
-                          key={diff.sample_id}
-                          className="border-b last:border-b-0"
-                          style={{ borderColor: "var(--border-subtle)" }}
-                        >
-                          <td className="py-2 pr-3 font-mono text-[11px]">{diff.sample_id}</td>
-                          <td className="py-2 pr-3 font-mono">
-                            {diff.baseline_score} · {diff.baseline_output.slice(0, 36)}
+                        <tr key={diff.sample_id}>
+                          <td className="font-mono-num px-5 py-2.5">{diff.sample_id}</td>
+                          <td className="font-mono-num px-4 py-2.5">
+                            {diff.baseline_score} ({diff.baseline_output.slice(0, 36)})
                           </td>
-                          <td className="py-2 pr-3 font-mono">
-                            {diff.challenger_score} · {diff.challenger_output.slice(0, 36)}
+                          <td className="font-mono-num px-4 py-2.5">
+                            {diff.challenger_score} ({diff.challenger_output.slice(0, 36)})
                           </td>
-                          <td className="py-2 font-mono text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                          <td
+                            className="font-mono-num px-5 py-2.5"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
                             {String(diff.target).slice(0, 36)}
                           </td>
                         </tr>
@@ -261,7 +315,7 @@ export function CompareLabPage() {
                   </table>
                 </div>
               ) : (
-                <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                <div className="text-ui-sm px-5 py-4" style={{ color: "var(--text-secondary)" }}>
                   Zero item-level score differences between baseline and challenger.
                 </div>
               )}

@@ -1,9 +1,9 @@
-import { Download } from "lucide-react";
 import { useRef } from "react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ErrorBar,
   Legend,
   PolarAngleAxis,
@@ -25,20 +25,20 @@ import { formatMetric, formatUsd } from "../../utils/format";
 import { Card } from "../common";
 
 const SERIES_COLORS = [
-  "#06B6D4", // Cyan
+  "#06B6D4", // Cyan primary
   "#10B981", // Emerald
-  "#8B5CF6", // Violet
+  "#38BDF8", // Sky
   "#F59E0B", // Amber
   "#F43F5E", // Rose
-  "#38BDF8", // Sky
+  "#14B8A6", // Teal
 ];
 
 const TOOLTIP_STYLE = {
   backgroundColor: "var(--bg-elevated)",
   border: "1px solid var(--border-subtle)",
-  borderRadius: "10px",
+  borderRadius: "6px",
   color: "var(--text-primary)",
-  fontSize: "12px",
+  fontSize: "13px",
 };
 
 function ExportToolbar({
@@ -51,35 +51,73 @@ function ExportToolbar({
   csvRows: Record<string, unknown>[];
 }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div
+      className="inline-flex divide-x overflow-hidden rounded-md border"
+      style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-elevated)" }}
+    >
       <button
         type="button"
         onClick={() => {
           if (containerRef.current) void exportElementToPng(containerRef.current, basename);
         }}
-        className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors hover:opacity-85"
-        style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}
+        className="telemetry-transition text-ui-sm cursor-pointer px-2.5 py-1 font-medium hover:opacity-80"
+        style={{ color: "var(--text-secondary)" }}
       >
-        <Download className="h-3 w-3" /> PNG
+        PNG
       </button>
       <button
         type="button"
         onClick={() => {
           if (containerRef.current) exportElementToSvg(containerRef.current, basename);
         }}
-        className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors hover:opacity-85"
-        style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}
+        className="telemetry-transition text-ui-sm cursor-pointer px-2.5 py-1 font-medium hover:opacity-80"
+        style={{ color: "var(--text-secondary)", borderColor: "var(--border-subtle)" }}
       >
         SVG
       </button>
       <button
         type="button"
         onClick={() => downloadCsv(csvRows, basename)}
-        className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors hover:opacity-85"
-        style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}
+        className="telemetry-transition text-ui-sm cursor-pointer px-2.5 py-1 font-medium hover:opacity-80"
+        style={{ color: "var(--text-secondary)", borderColor: "var(--border-subtle)" }}
       >
         CSV
       </button>
+    </div>
+  );
+}
+
+interface BarDatum {
+  label: string;
+  model: string;
+  score: number;
+  error: number;
+  unresolved: boolean;
+}
+
+function GroupedBarTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: ReadonlyArray<{ payload: BarDatum }>;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+  const item = payload[0]!.payload;
+  return (
+    <div className="p-3" style={TOOLTIP_STYLE}>
+      <div className="font-semibold">{item.label}</div>
+      <div className="font-mono-num text-ui-sm mt-1">
+        Score: {item.score.toFixed(1)}% ± {item.error.toFixed(1)}% (95% CI)
+      </div>
+      {item.unresolved && (
+        <div
+          className="font-mono-num text-ui-sm mt-1 font-semibold"
+          style={{ color: "var(--accent-amber)" }}
+        >
+          UNRESOLVED (cross-set or CI overlap)
+        </div>
+      )}
     </div>
   );
 }
@@ -93,7 +131,7 @@ export function GroupedBarErrorChart({
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  const data = runs.map((run) => {
+  const data: BarDatum[] = runs.map((run) => {
     const m = run.metrics[metricKey];
     const value = m ? Number((m.value * 100).toFixed(2)) : 0;
     const halfCi = m && m.stderr ? Number((m.stderr * 1.96 * 100).toFixed(2)) : 0;
@@ -108,18 +146,36 @@ export function GroupedBarErrorChart({
 
   return (
     <Card
-      title={`Accuracy & 95% CI (${metricKey})`}
-      subtitle="Bars show mean score (%) with ± 1.96 × stderr confidence intervals"
-      actions={<ExportToolbar containerRef={ref} basename={`eval-studio-bar-${metricKey}`} csvRows={data} />}
+      title={`Accuracy and 95% confidence interval (${metricKey})`}
+      subtitle="Cyan bars indicate resolved scores; amber dashed bars indicate UNRESOLVED intervals"
+      actions={
+        <ExportToolbar
+          containerRef={ref}
+          basename={`eval-studio-bar-${metricKey}`}
+          csvRows={data as unknown as Record<string, unknown>[]}
+        />
+      }
     >
       <div ref={ref} className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 16, right: 20, left: 0, bottom: 16 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-            <XAxis dataKey="model" tick={{ fill: "var(--text-secondary)", fontSize: 12 }} />
-            <YAxis domain={[0, 100]} tick={{ fill: "var(--text-secondary)", fontSize: 12 }} unit="%" />
-            <Tooltip contentStyle={TOOLTIP_STYLE} />
-            <Bar dataKey="score" name={metricKey} fill={SERIES_COLORS[0]} radius={[6, 6, 0, 0]}>
+            <XAxis dataKey="model" tick={{ fill: "var(--text-secondary)", fontSize: 13 }} />
+            <YAxis
+              domain={[0, 100]}
+              tick={{ fill: "var(--text-secondary)", fontSize: 13 }}
+              unit="%"
+            />
+            <Tooltip content={<GroupedBarTooltip />} />
+            <Bar dataKey="score" name={metricKey} radius={[4, 4, 0, 0]}>
+              {data.map((entry, idx) => (
+                <Cell
+                  key={`cell-${idx}`}
+                  fill={entry.unresolved ? "#F59E0B" : SERIES_COLORS[0]}
+                  stroke={entry.unresolved ? "#F59E0B" : "none"}
+                  strokeDasharray={entry.unresolved ? "4 2" : undefined}
+                />
+              ))}
               <ErrorBar dataKey="error" width={6} strokeWidth={2} stroke="#F59E0B" />
             </Bar>
           </BarChart>
@@ -146,18 +202,18 @@ export function RadarProfileChart({ runs }: { runs: CompareRunSummary[] }) {
 
   return (
     <Card
-      title="Multi-Metric Model Profile"
-      subtitle="Normalized radar profile across evaluated metrics"
+      title="Multi-metric model profile"
+      subtitle="Normalized radar comparison across evaluated metrics"
       actions={<ExportToolbar containerRef={ref} basename="eval-studio-radar" csvRows={radarData} />}
     >
       <div ref={ref} className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={radarData}>
             <PolarGrid stroke="var(--border-subtle)" />
-            <PolarAngleAxis dataKey="metric" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} />
-            <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
+            <PolarAngleAxis dataKey="metric" tick={{ fill: "var(--text-secondary)", fontSize: 13 }} />
+            <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "var(--text-muted)", fontSize: 13 }} />
             <Tooltip contentStyle={TOOLTIP_STYLE} />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: "13px" }} />
             {runs.slice(0, 5).map((run, idx) => (
               <Radar
                 key={run.receipt_id}
@@ -165,7 +221,7 @@ export function RadarProfileChart({ runs }: { runs: CompareRunSummary[] }) {
                 dataKey={run.receipt_id}
                 stroke={SERIES_COLORS[idx % SERIES_COLORS.length]}
                 fill={SERIES_COLORS[idx % SERIES_COLORS.length]}
-                fillOpacity={0.22}
+                fillOpacity={0.2}
               />
             ))}
           </RadarChart>
@@ -192,8 +248,8 @@ export function ParetoScatterChart({
 
   return (
     <Card
-      title="Cost vs. Accuracy Pareto Frontier"
-      subtitle="Total USD spend vs. primary metric score (bubble size = total tokens)"
+      title="Cost versus accuracy Pareto frontier"
+      subtitle="Total USD spend versus primary metric score (point area reflects token volume)"
       actions={<ExportToolbar containerRef={ref} basename="eval-studio-pareto" csvRows={points} />}
     >
       <div ref={ref} className="h-72 w-full">
@@ -204,7 +260,7 @@ export function ParetoScatterChart({
               type="number"
               dataKey="cost_usd"
               name="Cost (USD)"
-              tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
+              tick={{ fill: "var(--text-secondary)", fontSize: 13 }}
               tickFormatter={(v: number) => formatUsd(v)}
             />
             <YAxis
@@ -213,9 +269,9 @@ export function ParetoScatterChart({
               name="Score (%)"
               domain={[0, 100]}
               unit="%"
-              tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
+              tick={{ fill: "var(--text-secondary)", fontSize: 13 }}
             />
-            <ZAxis type="number" dataKey="tokens" range={[80, 420]} name="Tokens" />
+            <ZAxis type="number" dataKey="tokens" range={[90, 420]} name="Tokens" />
             <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ strokeDasharray: "3 3" }} />
             <Scatter name="Runs" data={points} fill={SERIES_COLORS[1]} />
           </ScatterChart>
@@ -236,23 +292,24 @@ export function CategoryBreakdownTable({
 
   return (
     <Card
-      title="Paper & Category Breakdown Heatmap"
-      subtitle="Per-category mean accuracy across selected runs"
+      title="Paper and category breakdown"
+      subtitle="Per-category mean accuracy across compared runs"
+      padding="none"
     >
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
+        <table className="text-ui-sm w-full text-left">
           <thead>
             <tr className="border-b" style={{ borderColor: "var(--border-subtle)" }}>
-              <th className="py-2 pr-4 font-semibold" style={{ color: "var(--text-secondary)" }}>
+              <th className="px-5 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
                 Task / Group
               </th>
-              <th className="py-2 pr-4 font-semibold" style={{ color: "var(--text-secondary)" }}>
+              <th className="px-4 py-3 font-medium" style={{ color: "var(--text-secondary)" }}>
                 Category
               </th>
               {runs.map((run) => (
                 <th
                   key={run.receipt_id}
-                  className="py-2 px-3 text-right font-semibold"
+                  className="px-5 py-3 text-right font-medium"
                   style={{ color: "var(--text-secondary)" }}
                 >
                   {run.model_id}
@@ -260,15 +317,14 @@ export function CategoryBreakdownTable({
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
             {entries.map((entry) => (
-              <tr
-                key={`${entry.group}-${entry.category}`}
-                className="border-b last:border-b-0"
-                style={{ borderColor: "var(--border-subtle)" }}
-              >
-                <td className="py-2.5 pr-4 font-medium">{entry.group}</td>
-                <td className="py-2.5 pr-4 font-mono text-[11px]" style={{ color: "var(--accent-cyan)" }}>
+              <tr key={`${entry.group}-${entry.category}`}>
+                <td className="px-5 py-3 font-medium">{entry.group}</td>
+                <td
+                  className="font-mono-num px-4 py-3"
+                  style={{ color: "var(--accent-cyan)" }}
+                >
                   {entry.category}
                 </td>
                 {runs.map((run) => {
@@ -283,13 +339,12 @@ export function CategoryBreakdownTable({
                           ? "var(--accent-amber-soft)"
                           : "var(--accent-rose-soft)";
                   return (
-                    <td key={run.receipt_id} className="py-2 px-3 text-right">
-                      <span
-                        className="inline-block rounded-md px-2 py-0.5 font-mono tabular-nums"
-                        style={{ backgroundColor: bg }}
-                      >
-                        {val !== undefined ? formatMetric(val) : "—"}
-                      </span>
+                    <td
+                      key={run.receipt_id}
+                      className="font-mono-num px-5 py-3 text-right font-medium"
+                      style={{ backgroundColor: bg }}
+                    >
+                      {val !== undefined ? formatMetric(val) : "--"}
                     </td>
                   );
                 })}

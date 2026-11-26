@@ -1,7 +1,7 @@
-import { CheckCircle2, FileText, Lock, Upload, XCircle } from "lucide-react";
+import { FileText, Lock, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
-import { Badge, Card, CodeBlock, ErrorBanner } from "../components/common";
+import { Card, CodeBlock, ErrorBanner, StatusBadge } from "../components/common";
 import type {
   CompiledSuiteSummary,
   ExtractedItem,
@@ -99,18 +99,33 @@ export function PaperStudioPage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1
+          className="text-[26px] font-semibold tracking-[-0.03em]"
+          style={{ color: "var(--text-primary)" }}
+        >
+          Compile scientific papers into benchmarks
+        </h1>
+        <p className="text-ui-base mt-1 max-w-[64ch]" style={{ color: "var(--text-secondary)" }}>
+          Extract citation-grounded questions, audit Stage 2 answerability verification, and lock immutable SHA-256 suites.
+        </p>
+      </div>
+
       {error && <ErrorBanner error={error} />}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card title="1. Source Paper & Extraction Mode" subtitle="Upload .md, .txt, or .pdf (with [pdf] extra)" className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <Card
+          title="Source paper and compiler pipeline"
+          subtitle="Upload .md, .txt, or .pdf manuscripts and select an extraction backend"
+          className="lg:col-span-8"
+        >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Select Paper</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Select paper</span>
               <select
                 value={paperPath}
                 onChange={(e) => setPaperPath(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-xs"
-                style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-elevated)" }}
+                className="input-control w-full px-3 py-2"
               >
                 {samples.map((s) => (
                   <option key={s.path} value={s.path}>
@@ -120,90 +135,118 @@ export function PaperStudioPage() {
               </select>
             </label>
 
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Or Upload Paper File</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Upload manuscript</span>
               <div
-                className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-1.5"
-                style={{ borderColor: "var(--border-subtle)" }}
+                className="input-control flex items-center gap-2 border-dashed px-3 py-1.5"
               >
-                <Upload className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--accent-cyan)" }} />
+                <Upload className="h-4 w-4 shrink-0" style={{ color: "var(--accent-cyan)" }} />
                 <input
                   type="file"
                   accept=".md,.txt,.pdf"
                   onChange={(e) => void handleUpload(e.target.files?.[0])}
-                  className="w-full text-[11px]"
+                  className="text-ui-sm w-full cursor-pointer"
                 />
               </div>
             </label>
 
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Suite Name</span>
+            <label className="text-ui-sm block space-y-1.5">
+              <span style={{ color: "var(--text-secondary)" }}>Suite name</span>
               <input
                 value={suiteName}
                 onChange={(e) => setSuiteName(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 font-mono text-xs"
-                style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-elevated)" }}
+                className="input-control font-mono-num w-full px-3 py-2"
               />
             </label>
 
-            <label className="block space-y-1 text-xs">
-              <span style={{ color: "var(--text-secondary)" }}>Compiler Mode</span>
-              <select
-                value={mode}
-                onChange={(e) => setMode(e.target.value as "heuristic" | "mock" | "http-byok")}
-                className="w-full rounded-lg border px-3 py-2 text-xs"
-                style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-elevated)" }}
+            <div className="text-ui-sm space-y-1.5">
+              <span className="block" style={{ color: "var(--text-secondary)" }}>
+                Compiler mode
+              </span>
+              <div
+                role="radiogroup"
+                aria-label="Compiler mode"
+                className="inline-flex w-full divide-x overflow-hidden rounded-md border"
+                style={{ borderColor: "var(--border-subtle)" }}
               >
-                <option value="mock">mock (demonstrates Stage 2 APPROVED + REJECTED)</option>
-                <option value="heuristic">heuristic (deterministic offline Markdown)</option>
-                <option value="http-byok">http-byok (separate Extractor + Verifier LLMs)</option>
-              </select>
-            </label>
+                {(
+                  [
+                    { id: "mock", label: "Mock" },
+                    { id: "heuristic", label: "Heuristic" },
+                    { id: "http-byok", label: "HTTP BYOK" },
+                  ] as const
+                ).map((m) => {
+                  const active = mode === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setMode(m.id)}
+                      className="telemetry-transition text-ui-sm flex-1 cursor-pointer px-3 py-2 font-medium"
+                      style={{
+                        backgroundColor: active ? "var(--accent-cyan-soft)" : "var(--bg-elevated)",
+                        color: active ? "var(--accent-cyan)" : "var(--text-secondary)",
+                      }}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
               type="button"
               disabled={busy || !paperPath}
               onClick={() => void handleCompile()}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold disabled:opacity-50"
-              style={{ backgroundColor: "var(--accent-cyan)", color: "#090D16" }}
+              className="telemetry-transition text-ui-base inline-flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 font-semibold hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: "var(--accent-cyan)", color: "var(--text-inverse)" }}
             >
-              <FileText className="h-3.5 w-3.5" /> Run 2-Stage Compile
+              <FileText className="h-4 w-4" /> Run two-stage compiler
             </button>
             {compiled && editableItems.length > 0 && (
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => void handleLock()}
-                className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold disabled:opacity-50"
-                style={{ backgroundColor: "var(--accent-emerald)", color: "#090D16" }}
+                className="telemetry-transition text-ui-base inline-flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 font-semibold hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ backgroundColor: "var(--accent-emerald)", color: "var(--text-inverse)" }}
               >
-                <Lock className="h-3.5 w-3.5" /> Lock SHA-256 & Export YAML
+                <Lock className="h-4 w-4" /> Lock SHA-256 suite
               </button>
             )}
           </div>
         </Card>
 
-        <Card title="Compiled & Locked Suites" subtitle="SHA-256 immutable paper packs" elevated>
+        <Card
+          title="Locked paper suites"
+          subtitle="Immutable compiled suites in tasks/compiled/"
+          padding="none"
+          className="lg:col-span-4"
+        >
           {compiledSuites.length === 0 ? (
-            <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-              No locked suites yet.
+            <div className="text-ui-sm p-5" style={{ color: "var(--text-secondary)" }}>
+              No locked suites compiled yet.
             </div>
           ) : (
-            <div className="space-y-2.5 text-xs">
+            <div className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
               {compiledSuites.map((s) => (
-                <div
-                  key={s.path}
-                  className="rounded-lg border p-2.5"
-                  style={{ borderColor: "var(--border-subtle)" }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">{s.name}</span>
-                    <Badge variant="emerald">{s.item_count} items</Badge>
+                <div key={s.path} className="px-5 py-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-ui-sm font-semibold">{s.name}</span>
+                    <span className="font-mono-num text-ui-sm" style={{ color: "var(--accent-emerald)" }}>
+                      {s.item_count} items
+                    </span>
                   </div>
-                  <div className="mt-1 font-mono text-[10px]" style={{ color: "var(--text-muted)" }}>
-                    SHA: {shortHash(s.suite_sha256)}
+                  <div
+                    className="font-mono-num text-ui-sm mt-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    SHA-256: {shortHash(s.suite_sha256)}
                   </div>
                 </div>
               ))}
@@ -215,21 +258,16 @@ export function PaperStudioPage() {
       {compiled && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card
-            title={`Stage 2 APPROVED (${editableItems.length})`}
-            subtitle="Verbatim citation-grounded items ready to lock"
+            title={`Stage 2 approved items (${editableItems.length})`}
+            subtitle="Verbatim citation-grounded items ready for SHA-256 locking"
+            padding="none"
           >
-            <div className="space-y-3">
+            <div className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
               {editableItems.map((item, idx) => (
-                <div
-                  key={item.item_id}
-                  className="space-y-2 rounded-xl border p-3 text-xs"
-                  style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-elevated)" }}
-                >
+                <div key={item.item_id} className="space-y-2.5 p-5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono font-semibold">{item.item_id}</span>
-                    <Badge variant="emerald">
-                      <CheckCircle2 className="mr-1 inline h-3 w-3" /> {item.category}
-                    </Badge>
+                    <span className="font-mono-num text-ui-sm font-semibold">{item.item_id}</span>
+                    <StatusBadge status="APPROVED" />
                   </div>
                   <input
                     value={item.question}
@@ -238,20 +276,25 @@ export function PaperStudioPage() {
                       next[idx] = { ...item, question: e.target.value };
                       setEditableItems(next);
                     }}
-                    className="w-full rounded-md border px-2.5 py-1.5 text-xs"
-                    style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-surface)" }}
+                    className="input-control w-full px-3 py-2"
                   />
-                  <div className="font-mono text-[11px]" style={{ color: "var(--accent-cyan)" }}>
-                    Gold: {item.reference_answer}
+                  <div
+                    className="font-mono-num text-ui-sm"
+                    style={{ color: "var(--accent-cyan)" }}
+                  >
+                    Reference answer: {item.reference_answer} ({item.category})
                   </div>
                   {item.citations.map((c, ci) => (
-                    <div
+                    <blockquote
                       key={ci}
-                      className="rounded-md p-2 text-[11px]"
-                      style={{ backgroundColor: "var(--bg-canvas)", color: "var(--text-secondary)" }}
+                      className="text-ui-sm m-0 border-l-2 pl-3"
+                      style={{
+                        borderColor: "var(--accent-cyan)",
+                        color: "var(--text-secondary)",
+                      }}
                     >
-                      p.{c.page} · {c.section}: “{c.quote}”
-                    </div>
+                      p.{c.page} ({c.section}): &ldquo;{c.quote}&rdquo;
+                    </blockquote>
                   ))}
                 </div>
               ))}
@@ -259,41 +302,50 @@ export function PaperStudioPage() {
           </Card>
 
           <Card
-            title={`Stage 2 REJECTED (${compiled.rejected_items.length})`}
-            subtitle="Blocked by answerability, leakage, or missing verbatim citation gate"
+            title={`Stage 2 rejected items (${compiled.rejected_items.length})`}
+            subtitle="Filtered by answerability, leakage, or missing verbatim citation gate"
+            padding="none"
           >
-            <div className="space-y-3">
-              {compiled.rejected_items.map((rej, idx) => (
-                <div
-                  key={idx}
-                  className="space-y-2 rounded-xl border p-3 text-xs"
-                  style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--accent-rose-soft)" }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-semibold">{rej.item.item_id}</span>
-                    <Badge variant="rose">
-                      <XCircle className="mr-1 inline h-3 w-3" /> REJECTED
-                    </Badge>
+            {compiled.rejected_items.length === 0 ? (
+              <div className="text-ui-sm p-5" style={{ color: "var(--text-secondary)" }}>
+                Zero items rejected in this compilation pass.
+              </div>
+            ) : (
+              <div className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+                {compiled.rejected_items.map((rej, idx) => (
+                  <div key={idx} className="space-y-2 p-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono-num text-ui-sm font-semibold">
+                        {rej.item.item_id}
+                      </span>
+                      <StatusBadge status="REJECTED" />
+                    </div>
+                    <p className="text-ui-sm" style={{ color: "var(--text-primary)" }}>
+                      {rej.item.question}
+                    </p>
+                    <ul
+                      className="text-ui-sm list-disc space-y-1 pl-5"
+                      style={{ color: "var(--accent-rose)" }}
+                    >
+                      {rej.reasons.map((r, ri) => (
+                        <li key={ri}>{r}</li>
+                      ))}
+                    </ul>
                   </div>
-                  <div>{rej.item.question}</div>
-                  <ul className="list-disc pl-4 text-[11px]" style={{ color: "var(--accent-rose)" }}>
-                    {rej.reasons.map((r, ri) => (
-                      <li key={ri}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       )}
 
       {locked && (
         <Card
-          title="Locked Runnable Task YAML"
-          subtitle={`Saved to ${locked.yaml_path} · Suite SHA-256: ${shortHash(locked.suite_sha256)}`}
+          title="Locked runnable task YAML"
+          subtitle={`Saved to ${locked.yaml_path} (Suite SHA-256: ${shortHash(locked.suite_sha256)})`}
+          padding="none"
         >
-          <CodeBlock code={locked.yaml_text} language="yaml" />
+          <CodeBlock code={locked.yaml_text} language="yaml" flush />
         </Card>
       )}
     </div>

@@ -50,8 +50,8 @@ export function CopyButton({
 
   const sizeCls =
     size === "sm"
-      ? "px-2 py-1 text-xs gap-1"
-      : "px-3 py-1.5 text-xs gap-1.5";
+      ? "px-2.5 py-1 text-ui-sm gap-1.5"
+      : "px-3 py-1.5 text-ui-sm gap-1.5";
 
   return (
     <button
@@ -59,7 +59,7 @@ export function CopyButton({
       onClick={() => {
         void handleCopy();
       }}
-      className={`telemetry-transition inline-flex cursor-pointer items-center rounded-lg font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-cyan)] ${
+      className={`telemetry-transition inline-flex cursor-pointer items-center rounded-md font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focus)] ${
         variant === "outline" ? "border" : ""
       } ${sizeCls} ${className}`}
       style={{
@@ -69,7 +69,7 @@ export function CopyButton({
             ? "var(--bg-elevated)"
             : "transparent",
         borderColor: copied
-          ? "rgba(16, 185, 129, 0.35)"
+          ? "rgba(16, 185, 129, 0.4)"
           : "var(--border-subtle)",
         color: copied ? "var(--accent-emerald)" : "var(--text-secondary)",
       }}

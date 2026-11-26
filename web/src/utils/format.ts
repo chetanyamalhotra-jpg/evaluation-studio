@@ -1,11 +1,11 @@
-// Numeric, cost, hash, and timestamp formatters for Precision Telemetry UI.
+// Numeric, cost, hash, and timestamp formatters for Scientific Telemetry UI.
 
 export function formatUsd(
   value: number | null | undefined,
   options?: { compact?: boolean }
 ): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return "—";
+    return "--";
   }
   const abs = Math.abs(value);
   if (abs === 0) {
@@ -33,7 +33,7 @@ export function formatMetric(
   decimals = 1
 ): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return "—";
+    return "--";
   }
   if (mode === "percent") {
     return `${(value * 100).toFixed(decimals)}%`;
@@ -61,17 +61,17 @@ export function shortHash(
   tail = 6
 ): string {
   if (!hash) {
-    return "—";
+    return "--";
   }
   if (hash.length <= head + tail + 1) {
     return hash;
   }
-  return `${hash.slice(0, head)}…${hash.slice(-tail)}`;
+  return `${hash.slice(0, head)}...${hash.slice(-tail)}`;
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) {
-    return "—";
+    return "--";
   }
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) {
@@ -88,7 +88,7 @@ export function formatDateTime(iso: string | null | undefined): string {
 
 export function formatTokens(count: number | null | undefined): string {
   if (count === null || count === undefined || Number.isNaN(count)) {
-    return "—";
+    return "--";
   }
   return new Intl.NumberFormat(undefined, {
     maximumFractionDigits: 0,
@@ -97,7 +97,7 @@ export function formatTokens(count: number | null | undefined): string {
 
 export function formatLatencyMs(ms: number | null | undefined): string {
   if (ms === null || ms === undefined || Number.isNaN(ms)) {
-    return "—";
+    return "--";
   }
   if (ms < 1000) {
     return `${Math.round(ms)} ms`;
@@ -107,7 +107,7 @@ export function formatLatencyMs(ms: number | null | undefined): string {
 
 export function formatBytes(bytes: number | null | undefined): string {
   if (bytes === null || bytes === undefined || Number.isNaN(bytes)) {
-    return "—";
+    return "--";
   }
   if (bytes < 1024) {
     return `${Math.round(bytes)} B`;

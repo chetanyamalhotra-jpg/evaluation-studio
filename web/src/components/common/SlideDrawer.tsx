@@ -73,14 +73,14 @@ export function SlideDrawer({
         >
           <div className="min-w-0 flex-1">
             <h2
-              className="truncate text-base font-semibold tracking-tight"
+              className="text-ui-lg truncate font-semibold"
               style={{ color: "var(--text-primary)" }}
             >
               {title}
             </h2>
             {subtitle && (
               <p
-                className="mt-0.5 truncate text-xs"
+                className="text-ui-sm mt-0.5 truncate"
                 style={{ color: "var(--text-secondary)" }}
               >
                 {subtitle}
@@ -93,7 +93,7 @@ export function SlideDrawer({
               type="button"
               onClick={onClose}
               aria-label="Close drawer"
-              className="telemetry-transition cursor-pointer rounded-lg border p-1.5 hover:opacity-85"
+              className="telemetry-transition cursor-pointer rounded-md border p-1.5 hover:opacity-85"
               style={{
                 backgroundColor: "var(--bg-elevated)",
                 borderColor: "var(--border-subtle)",
@@ -104,7 +104,7 @@ export function SlideDrawer({
             </button>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-5">{children}</div>
+        <div className="flex-1 overflow-y-auto">{children}</div>
       </aside>
     </div>
   );

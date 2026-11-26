@@ -5,8 +5,7 @@ export type BadgeVariant =
   | "cyan"
   | "emerald"
   | "amber"
-  | "rose"
-  | "violet";
+  | "rose";
 
 export interface BadgeProps {
   variant?: BadgeVariant;
@@ -17,42 +16,26 @@ export interface BadgeProps {
   children: ReactNode;
 }
 
-const VARIANT_STYLES: Record<BadgeVariant, { bg: string; color: string; border: string; dot: string }> = {
+const VARIANT_COLORS: Record<BadgeVariant, { color: string; dot: string }> = {
   neutral: {
-    bg: "var(--bg-elevated)",
     color: "var(--text-secondary)",
-    border: "var(--border-subtle)",
     dot: "var(--text-muted)",
   },
   cyan: {
-    bg: "var(--accent-cyan-soft)",
     color: "var(--accent-cyan)",
-    border: "rgba(6, 182, 212, 0.28)",
     dot: "var(--accent-cyan)",
   },
   emerald: {
-    bg: "var(--accent-emerald-soft)",
     color: "var(--accent-emerald)",
-    border: "rgba(16, 185, 129, 0.28)",
     dot: "var(--accent-emerald)",
   },
   amber: {
-    bg: "var(--accent-amber-soft)",
     color: "var(--accent-amber)",
-    border: "rgba(245, 158, 11, 0.3)",
     dot: "var(--accent-amber)",
   },
   rose: {
-    bg: "var(--accent-rose-soft)",
     color: "var(--accent-rose)",
-    border: "rgba(244, 63, 94, 0.3)",
     dot: "var(--accent-rose)",
-  },
-  violet: {
-    bg: "var(--accent-violet-soft)",
-    color: "var(--accent-violet)",
-    border: "rgba(139, 92, 246, 0.3)",
-    dot: "var(--accent-violet)",
   },
 };
 
@@ -64,22 +47,15 @@ export function Badge({
   className = "",
   children,
 }: BadgeProps) {
-  const tokens = VARIANT_STYLES[variant];
-  const sizeCls =
-    size === "sm"
-      ? "px-2 py-0.5 text-[11px] leading-4"
-      : "px-2.5 py-1 text-xs leading-4";
+  const tokens = VARIANT_COLORS[variant];
+  const sizeCls = size === "sm" ? "text-ui-sm" : "text-ui-base";
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border font-medium tracking-tight ${
+      className={`inline-flex items-center gap-1.5 font-medium tracking-tight ${
         mono ? "font-mono-num" : ""
       } ${sizeCls} ${className}`}
-      style={{
-        backgroundColor: tokens.bg,
-        color: tokens.color,
-        borderColor: tokens.border,
-      }}
+      style={{ color: tokens.color }}
     >
       {dot && (
         <span
@@ -127,7 +103,6 @@ export function statusToBadgeVariant(status: string): BadgeVariant {
       return "cyan";
     case "PENDING":
     case "QUEUED":
-      return "violet";
     default:
       return "neutral";
   }
